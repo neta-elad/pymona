@@ -129,6 +129,20 @@ BoolRef makeLessThan(const ElementRef &i1, const ElementRef &i2) {
     };
 }
 
+BoolRef makeLeq(const ElementRef &i1, const ElementRef &i2) {
+    return BoolRef{
+        set_union(i1.identifiers, i2.identifiers),
+        std::make_shared<ASTForm_LessEq>(i1.term, i2.term)
+    };
+}
+
+BoolRef makeSub(const SetRef &s1, const SetRef &s2) {
+    return BoolRef{
+        set_union(s1.identifiers, s2.identifiers),
+        std::make_shared<ASTForm_Sub>(s1.term, s2.term)
+    };
+}
+
 BoolRef makeIn(const ElementRef &e, const SetRef &s) {
     return BoolRef{
         set_union(e.identifiers, s.identifiers),
@@ -185,7 +199,7 @@ BoolRef makeImplies(const BoolRef &f1, const BoolRef &f2) {
 
 BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
     return BoolRef{
-    set_union(f1.identifiers, f2.identifiers),
+        set_union(f1.identifiers, f2.identifiers),
         std::make_shared<ASTForm_Biimpl>(f1.form, f2.form)
     };
 }
@@ -432,7 +446,10 @@ NB_MODULE(_pymona, m) {
 
     m.def("m_int", &makeInt);
     m.def("less_than", &makeLessThan,
-        nb::sig("def less_than(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+          nb::sig("def less_than(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+    m.def("leq", &makeLeq,
+          nb::sig("def leq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+    m.def("sub", &makeSub);
 
     m.def("m_in", &makeIn);
 
