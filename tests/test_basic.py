@@ -1,0 +1,78 @@
+import pymona
+
+def test_basic() -> None:
+    b1 = pymona.BoolIdent("b1")
+    b2 = pymona.BoolIdent("b2")
+    formula = pymona.m_and(b1, pymona.m_not(b2))
+    model = pymona.solve(formula)
+    assert model is not None
+    assert model["b1"]
+    assert not model["b2"]
+
+def test_ints() -> None:
+    x = pymona.ElementIdent("x")
+    y = pymona.ElementIdent("y")
+    z = pymona.ElementIdent("z")
+    formula = pymona.m_and(
+        pymona.less_than(x, y),
+        pymona.less_than(y, z),
+        pymona.less_than(z, 10),
+        pymona.less_than(4, x)
+    )
+    model = pymona.solve(formula)
+    assert model is not None
+    x_val = model["x"]
+    y_val = model["y"]
+    z_val = model["z"]
+
+    assert isinstance(x_val, int)
+    assert isinstance(y_val, int)
+    assert isinstance(z_val, int)
+
+    assert x_val < y_val < z_val
+    assert x_val > 4
+    assert z_val < 10
+
+
+def test_predicate() -> None:
+    a = pymona.ElementIdent("a")
+    b = pymona.ElementIdent("b")
+    c = pymona.ElementIdent("c")
+    x = pymona.ElementIdent("x")
+    y = pymona.ElementIdent("y")
+    s = pymona.SetIdent("s")
+
+    a_between_b_and_c = pymona.m_and(
+        pymona.less_than(b, a),
+        pymona.less_than(a, c)
+    )
+
+    pred = pymona.pred("a_between_b_and_c", (a, b), a_between_b_and_c)
+
+    model = pymona.solve(pymona.m_and(
+        pred(x, y),
+        pymona.less_than(c, 7),
+        pymona.less_than(5, c),
+        pymona.less_than(20, a),
+        pymona.less_than(a, b),
+        pymona.m_in(x, s),
+        pymona.m_in(y, s),
+    ))
+
+    assert model is not None
+
+    c_val = model["c"]
+    x_val = model["x"]
+    y_val = model["y"]
+    s_val = model["s"]
+
+    assert isinstance(c_val, int)
+    assert isinstance(x_val, int)
+    assert isinstance(y_val, int)
+    assert isinstance(s_val, set)
+
+    assert y_val < x_val < c_val
+    assert x_val in s_val
+    assert y_val in s_val
+
+    print(model)

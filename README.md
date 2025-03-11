@@ -1,0 +1,1 @@
+# PyMONA: Python bindings for the MONA WS1S/WS2S solver

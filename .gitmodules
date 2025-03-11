@@ -1,0 +1,3 @@
+[submodule "vendor/MONA"]
+	path = vendor/MONA
+	url = git@github.com:neta-elad/MONA.git

@@ -1,0 +1,13 @@
+pymona.egg-info
+_skbuild
+/dist
+__pycache__
+build
+*.pyd
+*.egg-info
+.vscode
+.vs
+.idea
+.venv
+cmake-build-debug
+cmake-build-release
