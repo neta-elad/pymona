@@ -183,6 +183,13 @@ BoolRef makeImplies(const BoolRef &f1, const BoolRef &f2) {
     };
 }
 
+BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
+    return BoolRef{
+    set_union(f1.identifiers, f2.identifiers),
+        std::make_shared<ASTForm_Biimpl>(f1.form, f2.form)
+    };
+}
+
 BoolRef makeNot(const BoolRef &f) {
     return BoolRef{
         f.identifiers,
@@ -434,6 +441,7 @@ NB_MODULE(_pymona, m) {
     m.def("m_and", &makeAnd);
     m.def("m_or", &makeOr);
     m.def("implies", &makeImplies);
+    m.def("iff", &makeIff);
     m.def("m_not", &makeNot);
 
     m.def("forall1", &makeForall1);
