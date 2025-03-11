@@ -204,6 +204,20 @@ BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
     };
 }
 
+BoolRef makeElementEq(const ElementRef &i1, const ElementRef &i2) {
+    return BoolRef{
+        set_union(i1.identifiers, i2.identifiers),
+        std::make_shared<ASTForm_Equal1>(i1.term, i2.term)
+    };
+}
+
+BoolRef makeSetEq(const SetRef &s1, const SetRef &s2) {
+    return BoolRef{
+        set_union(s1.identifiers, s2.identifiers),
+        std::make_shared<ASTForm_Equal2>(s1.term, s2.term)
+    };
+}
+
 BoolRef makeNot(const BoolRef &f) {
     return BoolRef{
         f.identifiers,
@@ -459,6 +473,9 @@ NB_MODULE(_pymona, m) {
     m.def("m_or", &makeOr);
     m.def("implies", &makeImplies);
     m.def("iff", &makeIff);
+    m.def("eq", &makeIff)
+            .def("eq", &makeElementEq)
+            .def("eq", &makeSetEq);
     m.def("m_not", &makeNot);
 
     m.def("forall1", &makeForall1);
