@@ -152,15 +152,29 @@ BoolRef makeIn(const ElementRef &e, const SetRef &s) {
 
 BoolRef makeTrue() {
     return BoolRef{
-        std::set<Ident>(),
+        Identifiers{},
         std::make_shared<ASTForm_True>(dummyPos)
     };
 }
 
 BoolRef makeFalse() {
     return BoolRef{
-        std::set<Ident>(),
+        Identifiers{},
         std::make_shared<ASTForm_False>(dummyPos)
+    };
+}
+
+SetRef makeEmpty() {
+    return SetRef{
+    Identifiers{},
+        std::make_shared<ASTTerm2_Empty>()
+    };
+}
+
+BoolRef makeIsEmpty(const SetRef &s) {
+    return BoolRef{
+        s.identifiers,
+        std::make_shared<ASTForm_EmptyPred>(s.term)
     };
 }
 
@@ -463,7 +477,10 @@ NB_MODULE(_pymona, m) {
           nb::sig("def less_than(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
     m.def("leq", &makeLeq,
           nb::sig("def leq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+
+    m.def("empty", &makeEmpty);
     m.def("sub", &makeSub);
+    m.def("is_empty", &makeIsEmpty);
 
     m.def("m_in", &makeIn);
 
