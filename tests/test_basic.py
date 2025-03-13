@@ -113,3 +113,11 @@ def test_eq() -> None:
     x_val = model["x"]
     assert isinstance(x_val, int)
     assert x_val == 5
+
+def test_set() -> None:
+    s = pymona.SetIdent("s")
+    model = pymona.solve(pymona.eq(s, pymona.m_set(1, 2, 3)))
+    assert model is not None
+    s_val = model["s"]
+    assert isinstance(s_val, set)
+    assert {1, 2, 3} == s_val

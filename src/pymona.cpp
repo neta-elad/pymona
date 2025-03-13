@@ -483,6 +483,20 @@ ElementRef makeMinus(const ElementRef &i1, const ElementInt &i2) {
     };
 }
 
+SetRef makeSet(nb::args args) {
+    Identifiers identifiers;
+    SharedASTList elements;
+    for (auto arg: args) {
+        ElementRef f = nb::cast<ElementRef>(arg);
+        identifiers.insert(f.identifiers.begin(), f.identifiers.end());
+        elements.push_back(f.term);
+    }
+    return SetRef{
+        identifiers,
+        std::make_shared<ASTTerm2_Set>(elements)
+    };
+}
+
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
@@ -551,8 +565,10 @@ NB_MODULE(_pymona, m) {
 
     m.def("true", &makeTrue);
     m.def("false", &makeFalse);
-    m.def("m_and", &makeAnd);
-    m.def("m_or", &makeOr);
+    m.def("m_and", &makeAnd,
+          nb::sig("def m_and(*args: BoolRef) -> BoolRef"));
+    m.def("m_or", &makeOr,
+          nb::sig("def m_or(*args: BoolRef) -> BoolRef"));
     m.def("implies", &makeImplies);
     m.def("iff", &makeIff);
     m.def("eq", &makeIff)
@@ -571,6 +587,9 @@ NB_MODULE(_pymona, m) {
     m.def("forall2", &makeForall2Iter);
     m.def("exists2", &makeExists2);
     m.def("exists2", &makeExists2Iter);
+
+    m.def("m_set", &makeSet,
+        nb::sig("def m_set(*args: ElementRef | int) -> SetRef"));
 
     m.def("solve", &solve);
 
