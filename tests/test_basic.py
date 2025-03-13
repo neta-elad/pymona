@@ -77,10 +77,29 @@ def test_predicate() -> None:
     assert x_val in s_val
     assert y_val in s_val
 
+def test_sub() -> None:
+    s1 = pymona.SetIdent("s1")
+    s2 = pymona.SetIdent("s2")
+    model = pymona.solve(pymona.m_and(
+        pymona.m_in(0, s1),
+        s2 <= s1,
+    ))
+
+    assert model is not None
+    s1_val = model["s1"]
+    s2_val = model["s2"]
+
+    assert isinstance(s1_val, set)
+    assert isinstance(s2_val, set)
+
+    assert 0 in s1_val
+    assert s2_val <= s1_val
+
 
 def test_addition() -> None:
     x = pymona.ElementIdent("x")
-    model = pymona.solve(x + 5 > 10)
+    y = pymona.ElementIdent("y")
+    model = pymona.solve(pymona.m_and(5 + x > y - 3, y > 13, x < y))
     assert model is not None
     x_val = model["x"]
     assert isinstance(x_val, int)

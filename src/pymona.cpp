@@ -158,6 +158,10 @@ BoolRef makeSub(const SetRef &s1, const SetRef &s2) {
     };
 }
 
+BoolRef makeSup(const SetRef &s1, const SetRef &s2) {
+    return makeSub(s2, s1);
+}
+
 BoolRef makeIn(const ElementRef &e, const SetRef &s) {
     return BoolRef{
         set_union(e.identifiers, s.identifiers),
@@ -458,17 +462,24 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
     };
 }
 
-ElementRef makeAddRightInt(const ElementRef &i1, const ElementInt &i2) {
+ElementRef makePlusRightInt(const ElementRef &i1, const ElementInt &i2) {
     return ElementRef{
         i1.identifiers,
         std::make_shared<ASTTerm1_Plus>(i1.term, i2.i)
     };
 }
 
-ElementRef makeAddLeftInt(const ElementInt &i1, const ElementRef &i2) {
+ElementRef makePlusLeftInt(const ElementInt &i1, const ElementRef &i2) {
     return ElementRef{
         i2.identifiers,
         std::make_shared<ASTTerm1_Plus>(i2.term, i1.i)
+    };
+}
+
+ElementRef makeMinus(const ElementRef &i1, const ElementInt &i2) {
+    return ElementRef{
+        i1.identifiers,
+        std::make_shared<ASTTerm1_Minus>(i1.term, i2.i)
     };
 }
 
@@ -483,8 +494,12 @@ NB_MODULE(_pymona, m) {
 
     nb::class_<ElementRef>(m, "ElementRef")
             .def(nb::init_implicit<int>())
-            .def("__add__", &makeAddRightInt,
+            .def("__add__", &makePlusRightInt,
                  nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"))
+            .def("__radd__", &makePlusRightInt,
+                 nb::sig("def __radd__(self, arg: ElementRef | int) -> ElementRef"))
+            .def("__sub__", &makeMinus,
+                 nb::sig("def __sub__(self, arg: ElementRef | int) -> ElementRef"))
             .def("__lt__", &makeLessThan,
                  nb::sig("def __lt__(self, arg: ElementRef | int) -> BoolRef"))
             .def("__le__", &makeLeq,
@@ -496,12 +511,14 @@ NB_MODULE(_pymona, m) {
 
     nb::class_<ElementInt>(m, "ElementInt")
             .def(nb::init_implicit<int>())
-            .def("__add__", &makeAddLeftInt);
+            .def("__add__", &makePlusLeftInt);
     nb::class_<ElementIdent, ElementRef>(m, "ElementIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<ElementIdent>);
 
-    nb::class_<SetRef>(m, "SetRef");
+    nb::class_<SetRef>(m, "SetRef")
+            .def("__le__", &makeSub)
+            .def("__ge__", &makeSup);
     nb::class_<SetIdent, SetRef>(m, "SetIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<SetIdent>);
@@ -529,7 +546,8 @@ NB_MODULE(_pymona, m) {
     m.def("sub", &makeSub);
     m.def("is_empty", &makeIsEmpty);
 
-    m.def("m_in", &makeIn);
+    m.def("m_in", &makeIn,
+          nb::sig("def m_in(arg0: ElementRef | int, arg1: SetRef) -> BoolRef"));
 
     m.def("true", &makeTrue);
     m.def("false", &makeFalse);
