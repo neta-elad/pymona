@@ -447,8 +447,10 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
         case tWrongNoParameters:
             alist->reset();
             throw nb::value_error(std::format(
-                "Wrong number of parameters to {}",
-                symbolTable.lookupSymbol(id)
+                "Wrong number of parameters to {}, expected {}, got {}",
+                symbolTable.lookupSymbol(id),
+                pred.n,
+                salist.size()
             ).c_str());
         case tOK:
             ;
@@ -544,7 +546,14 @@ NB_MODULE(_pymona, m) {
 
     nb::class_<PredRef>(m, "PredRef")
             .def("__call__", &makePredCall)
-            .def("__str__", &lookupSymbol<PredRef>);
+            .def("__str__", &lookupSymbol<PredRef>)
+    .def("__repr__", [](const PredRef &p) {
+        return std::format(
+            "<pymona.PredRef `{}` with {} parameters>",
+            lookupSymbol(p),
+            p.n
+            );
+    });
 
     m.def("m_int", &makeInt);
     m.def("lt", &makeLessThan,
