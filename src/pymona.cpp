@@ -484,7 +484,7 @@ NB_MODULE(_pymona, m) {
     nb::class_<ElementRef>(m, "ElementRef")
             .def(nb::init_implicit<int>())
             .def("__add__", &makeAddRightInt,
-                nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"))
+                 nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"))
             .def("__lt__", &makeLessThan,
                  nb::sig("def __lt__(self, arg: ElementRef | int) -> BoolRef"))
             .def("__le__", &makeLeq,
@@ -538,7 +538,9 @@ NB_MODULE(_pymona, m) {
     m.def("implies", &makeImplies);
     m.def("iff", &makeIff);
     m.def("eq", &makeIff)
-            .def("eq", &makeElementEq)
+            .def("eq", &makeElementEq,
+                 nb::sig("def eq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef")
+            )
             .def("eq", &makeSetEq);
     m.def("m_not", &makeNot);
 

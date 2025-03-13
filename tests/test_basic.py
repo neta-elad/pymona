@@ -1,5 +1,6 @@
 import pymona
 
+
 def test_basic() -> None:
     b1 = pymona.BoolIdent("b1")
     b2 = pymona.BoolIdent("b2")
@@ -8,6 +9,7 @@ def test_basic() -> None:
     assert model is not None
     assert model["b1"]
     assert not model["b2"]
+
 
 def test_ints() -> None:
     x = pymona.ElementIdent("x")
@@ -75,6 +77,7 @@ def test_predicate() -> None:
     assert x_val in s_val
     assert y_val in s_val
 
+
 def test_addition() -> None:
     x = pymona.ElementIdent("x")
     model = pymona.solve(x + 5 > 10)
@@ -82,3 +85,12 @@ def test_addition() -> None:
     x_val = model["x"]
     assert isinstance(x_val, int)
     assert x_val > 5
+
+
+def test_eq() -> None:
+    x = pymona.ElementIdent("x")
+    model = pymona.solve(pymona.eq(x, 5))
+    assert model is not None
+    x_val = model["x"]
+    assert isinstance(x_val, int)
+    assert x_val == 5
