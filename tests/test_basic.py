@@ -14,10 +14,10 @@ def test_ints() -> None:
     y = pymona.ElementIdent("y")
     z = pymona.ElementIdent("z")
     formula = pymona.m_and(
-        pymona.less_than(x, y),
-        pymona.less_than(y, z),
-        pymona.less_than(z, 10),
-        pymona.less_than(4, x)
+        x < y,
+        y < z,
+        z < 10,
+        x > 4,
     )
     model = pymona.solve(formula)
     assert model is not None
@@ -43,18 +43,18 @@ def test_predicate() -> None:
     s = pymona.SetIdent("s")
 
     a_between_b_and_c = pymona.m_and(
-        pymona.less_than(b, a),
-        pymona.less_than(a, c)
+        b < a,
+        a < c
     )
 
     pred = pymona.pred("a_between_b_and_c", (a, b), a_between_b_and_c)
 
     model = pymona.solve(pymona.m_and(
         pred(x, y),
-        pymona.less_than(c, 7),
-        pymona.less_than(5, c),
-        pymona.less_than(20, a),
-        pymona.less_than(a, b),
+        c < 7,
+        pymona.lt(5, c),
+        pymona.lt(20, a),
+        a < b,
         pymona.m_in(x, s),
         pymona.m_in(y, s),
     ))
@@ -75,4 +75,10 @@ def test_predicate() -> None:
     assert x_val in s_val
     assert y_val in s_val
 
-    print(model)
+def test_addition() -> None:
+    x = pymona.ElementIdent("x")
+    model = pymona.solve(x + 5 > 10)
+    assert model is not None
+    x_val = model["x"]
+    assert isinstance(x_val, int)
+    assert x_val > 5

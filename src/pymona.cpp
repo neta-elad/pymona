@@ -87,6 +87,13 @@ struct ElementRef {
     ASTTerm1Ptr term;
 };
 
+struct ElementInt : ElementRef {
+    ElementInt(int ii) : ElementRef(ii), i(ii) {
+    }
+
+    int i;
+};
+
 struct ElementIdent : ElementRef, IdentContainer {
     ElementIdent(std::string_view name)
         : ElementIdent(addVar(name, Varname1)) {
@@ -129,11 +136,19 @@ BoolRef makeLessThan(const ElementRef &i1, const ElementRef &i2) {
     };
 }
 
+BoolRef makeGreaterThan(const ElementRef &i1, const ElementRef &i2) {
+    return makeLessThan(i2, i1);
+}
+
 BoolRef makeLeq(const ElementRef &i1, const ElementRef &i2) {
     return BoolRef{
         set_union(i1.identifiers, i2.identifiers),
         std::make_shared<ASTForm_LessEq>(i1.term, i2.term)
     };
+}
+
+BoolRef makeGeq(const ElementRef &i1, const ElementRef &i2) {
+    return makeLeq(i2, i1);
 }
 
 BoolRef makeSub(const SetRef &s1, const SetRef &s2) {
@@ -166,7 +181,7 @@ BoolRef makeFalse() {
 
 SetRef makeEmpty() {
     return SetRef{
-    Identifiers{},
+        Identifiers{},
         std::make_shared<ASTTerm2_Empty>()
     };
 }
@@ -443,6 +458,20 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
     };
 }
 
+ElementRef makeAddRightInt(const ElementRef &i1, const ElementInt &i2) {
+    return ElementRef{
+        i1.identifiers,
+        std::make_shared<ASTTerm1_Plus>(i1.term, i2.i)
+    };
+}
+
+ElementRef makeAddLeftInt(const ElementInt &i1, const ElementRef &i2) {
+    return ElementRef{
+        i2.identifiers,
+        std::make_shared<ASTTerm1_Plus>(i2.term, i1.i)
+    };
+}
+
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
@@ -453,7 +482,21 @@ NB_MODULE(_pymona, m) {
             .def("__str__", &lookupSymbol<BoolIdent>);
 
     nb::class_<ElementRef>(m, "ElementRef")
-            .def(nb::init_implicit<int>());
+            .def(nb::init_implicit<int>())
+            .def("__add__", &makeAddRightInt,
+                nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"))
+            .def("__lt__", &makeLessThan,
+                 nb::sig("def __lt__(self, arg: ElementRef | int) -> BoolRef"))
+            .def("__le__", &makeLeq,
+                 nb::sig("def __le__(self, arg: ElementRef | int) -> BoolRef"))
+            .def("__gt__", &makeGreaterThan,
+                 nb::sig("def __gt__(self, arg: ElementRef | int) -> BoolRef"))
+            .def("__ge__", &makeGeq,
+                 nb::sig("def __ge__(self, arg: ElementRef | int) -> BoolRef"));
+
+    nb::class_<ElementInt>(m, "ElementInt")
+            .def(nb::init_implicit<int>())
+            .def("__add__", &makeAddLeftInt);
     nb::class_<ElementIdent, ElementRef>(m, "ElementIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<ElementIdent>);
@@ -473,10 +516,14 @@ NB_MODULE(_pymona, m) {
             .def("__str__", &lookupSymbol<PredRef>);
 
     m.def("m_int", &makeInt);
-    m.def("less_than", &makeLessThan,
-          nb::sig("def less_than(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+    m.def("lt", &makeLessThan,
+          nb::sig("def lt(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+    m.def("gt", &makeGreaterThan,
+          nb::sig("def gt(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
     m.def("leq", &makeLeq,
           nb::sig("def leq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
+    m.def("geq", &makeGeq,
+          nb::sig("def geq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
 
     m.def("empty", &makeEmpty);
     m.def("sub", &makeSub);
