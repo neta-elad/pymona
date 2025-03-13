@@ -398,9 +398,9 @@ PredRef makePred(
     f.form->freeVars(frees, bound);
 
     predicateLib.insert(
-        bound,
-        frees,
         list,
+        frees,
+        bound,
         f.form,
         false,
         pred
