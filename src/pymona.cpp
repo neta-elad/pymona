@@ -169,6 +169,10 @@ BoolRef makeIn(const ElementRef &e, const SetRef &s) {
     };
 }
 
+BoolRef makeNi(const SetRef &s, const ElementRef &e) {
+    return makeIn(e, s);
+}
+
 BoolRef makeTrue() {
     return BoolRef{
         Identifiers{},
@@ -534,7 +538,9 @@ NB_MODULE(_pymona, m) {
 
     nb::class_<SetRef>(m, "SetRef")
             .def("__le__", &makeSub)
-            .def("__ge__", &makeSup);
+            .def("__ge__", &makeSup)
+            .def("__call__", &makeNi,
+                 nb::sig("def __call__(self, arg: ElementRef | int) -> BoolRef"));
     nb::class_<SetIdent, SetRef>(m, "SetIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<SetIdent>);
@@ -547,13 +553,13 @@ NB_MODULE(_pymona, m) {
     nb::class_<PredRef>(m, "PredRef")
             .def("__call__", &makePredCall)
             .def("__str__", &lookupSymbol<PredRef>)
-    .def("__repr__", [](const PredRef &p) {
-        return std::format(
-            "<pymona.PredRef `{}` with {} parameters>",
-            lookupSymbol(p),
-            p.n
-            );
-    });
+            .def("__repr__", [](const PredRef &p) {
+                return std::format(
+                    "<pymona.PredRef `{}` with {} parameters>",
+                    lookupSymbol(p),
+                    p.n
+                );
+            });
 
     m.def("m_int", &makeInt);
     m.def("lt", &makeLessThan,
@@ -598,7 +604,7 @@ NB_MODULE(_pymona, m) {
     m.def("exists2", &makeExists2Iter);
 
     m.def("m_set", &makeSet,
-        nb::sig("def m_set(*args: ElementRef | int) -> SetRef"));
+          nb::sig("def m_set(*args: ElementRef | int) -> SetRef"));
 
     m.def("solve", &solve);
 

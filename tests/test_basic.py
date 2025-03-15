@@ -58,7 +58,7 @@ def test_predicate() -> None:
         pymona.lt(20, a),
         a < b,
         pymona.m_in(x, s),
-        pymona.m_in(y, s),
+        s(y),
     ))
 
     assert model is not None
