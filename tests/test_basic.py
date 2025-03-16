@@ -51,15 +51,16 @@ def test_predicate() -> None:
 
     pred = pymona.pred("a_between_b_and_c", (a, b), a_between_b_and_c)
 
-    model = pymona.solve(pymona.m_and(
+    formula = pymona.m_and(
         pred(x, y),
         c < 7,
         pymona.lt(5, c),
         pymona.lt(20, a),
         a < b,
-        pymona.m_in(x, s),
-        s(y),
-    ))
+        pymona.m_in(x, s), s(y),
+    )
+
+    model = pymona.solve(formula)
 
     assert model is not None
 
@@ -76,6 +77,7 @@ def test_predicate() -> None:
     assert y_val < x_val < c_val
     assert x_val in s_val
     assert y_val in s_val
+
 
 def test_sub() -> None:
     s1 = pymona.SetIdent("s1")
@@ -113,6 +115,7 @@ def test_eq() -> None:
     x_val = model["x"]
     assert isinstance(x_val, int)
     assert x_val == 5
+
 
 def test_set() -> None:
     s = pymona.SetIdent("s")

@@ -507,13 +507,15 @@ SetRef makeSet(nb::args args) {
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
 
-    nb::class_<BoolRef>(m, "BoolRef");
+    nb::class_<BoolRef>(m, "BoolRef")
+            .def("dump", [](const BoolRef &f) { f.form->dump(); });
     nb::class_<BoolIdent, BoolRef>(m, "BoolIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<BoolIdent>);
 
     nb::class_<ElementRef>(m, "ElementRef")
             .def(nb::init_implicit<int>())
+            .def("dump", [](const ElementRef &e) { e.term->dump(); })
             .def("__add__", &makePlusRightInt,
                  nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"))
             .def("__radd__", &makePlusRightInt,
@@ -537,6 +539,7 @@ NB_MODULE(_pymona, m) {
             .def("__str__", &lookupSymbol<ElementIdent>);
 
     nb::class_<SetRef>(m, "SetRef")
+            .def("dump", [](const SetRef &s) { s.term->dump(); })
             .def("__le__", &makeSub)
             .def("__ge__", &makeSup)
             .def("__call__", &makeNi,
