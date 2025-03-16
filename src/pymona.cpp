@@ -2,6 +2,7 @@
 #include <utility>
 #include <variant>
 #include <format>
+#include <concepts>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -129,26 +130,21 @@ ElementRef makeInt(int i) {
     return i;
 }
 
-BoolRef makeLessThan(const ElementRef &i1, const ElementRef &i2) {
+template<typename T>
+    requires std::derived_from<T, ASTForm_tt>
+BoolRef makeElementElementFormula(const ElementRef &e1, const ElementRef &e2) {
     return BoolRef{
-        set_union(i1.identifiers, i2.identifiers),
-        std::make_shared<ASTForm_Less>(i1.term, i2.term, dummyPos)
+        set_union(e1.identifiers, e2.identifiers),
+        std::make_shared<T>(e1.term, e2.term, dummyPos)
     };
 }
 
 BoolRef makeGreaterThan(const ElementRef &i1, const ElementRef &i2) {
-    return makeLessThan(i2, i1);
-}
-
-BoolRef makeLeq(const ElementRef &i1, const ElementRef &i2) {
-    return BoolRef{
-        set_union(i1.identifiers, i2.identifiers),
-        std::make_shared<ASTForm_LessEq>(i1.term, i2.term)
-    };
+    return makeElementElementFormula<ASTForm_Less>(i2, i1);
 }
 
 BoolRef makeGeq(const ElementRef &i1, const ElementRef &i2) {
-    return makeLeq(i2, i1);
+    return makeElementElementFormula<ASTForm_LessEq>(i2, i1);
 }
 
 BoolRef makeSub(const SetRef &s1, const SetRef &s2) {
@@ -238,13 +234,6 @@ BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
     return BoolRef{
         set_union(f1.identifiers, f2.identifiers),
         std::make_shared<ASTForm_Biimpl>(f1.form, f2.form)
-    };
-}
-
-BoolRef makeElementEq(const ElementRef &i1, const ElementRef &i2) {
-    return BoolRef{
-        set_union(i1.identifiers, i2.identifiers),
-        std::make_shared<ASTForm_Equal1>(i1.term, i2.term)
     };
 }
 
@@ -503,6 +492,49 @@ SetRef makeSet(nb::args args) {
     };
 }
 
+ElementRef makeMinArgs(nb::args args) {
+    Identifiers identifiers;
+    SharedASTList elements;
+    for (auto arg: args) {
+        ElementRef f = nb::cast<ElementRef>(arg);
+        identifiers.insert(f.identifiers.begin(), f.identifiers.end());
+        elements.push_back(f.term);
+    }
+    return ElementRef{
+        identifiers,
+        std::make_shared<ASTTerm1_Min>(std::make_shared<ASTTerm2_Set>(elements))
+    };
+}
+
+ElementRef makeMinSet(const SetRef &s) {
+    return ElementRef{
+        s.identifiers,
+        std::make_shared<ASTTerm1_Min>(s.term)
+    };
+}
+
+
+ElementRef makeMaxArgs(nb::args args) {
+    Identifiers identifiers;
+    SharedASTList elements;
+    for (auto arg: args) {
+        ElementRef f = nb::cast<ElementRef>(arg);
+        identifiers.insert(f.identifiers.begin(), f.identifiers.end());
+        elements.push_back(f.term);
+    }
+    return ElementRef{
+        identifiers,
+        std::make_shared<ASTTerm1_Max>(std::make_shared<ASTTerm2_Set>(elements))
+    };
+}
+
+ElementRef makeMaxSet(const SetRef &s) {
+    return ElementRef{
+        s.identifiers,
+        std::make_shared<ASTTerm1_Max>(s.term)
+    };
+}
+
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
@@ -522,9 +554,9 @@ NB_MODULE(_pymona, m) {
                  nb::sig("def __radd__(self, arg: ElementRef | int) -> ElementRef"))
             .def("__sub__", &makeMinus,
                  nb::sig("def __sub__(self, arg: ElementRef | int) -> ElementRef"))
-            .def("__lt__", &makeLessThan,
+            .def("__lt__", &makeElementElementFormula<ASTForm_Less>,
                  nb::sig("def __lt__(self, arg: ElementRef | int) -> BoolRef"))
-            .def("__le__", &makeLeq,
+            .def("__le__", &makeElementElementFormula<ASTForm_LessEq>,
                  nb::sig("def __le__(self, arg: ElementRef | int) -> BoolRef"))
             .def("__gt__", &makeGreaterThan,
                  nb::sig("def __gt__(self, arg: ElementRef | int) -> BoolRef"))
@@ -565,11 +597,11 @@ NB_MODULE(_pymona, m) {
             });
 
     m.def("m_int", &makeInt);
-    m.def("lt", &makeLessThan,
+    m.def("lt", &makeElementElementFormula<ASTForm_Less>,
           nb::sig("def lt(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
     m.def("gt", &makeGreaterThan,
           nb::sig("def gt(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
-    m.def("leq", &makeLeq,
+    m.def("leq", &makeElementElementFormula<ASTForm_LessEq>,
           nb::sig("def leq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
     m.def("geq", &makeGeq,
           nb::sig("def geq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef"));
@@ -590,7 +622,7 @@ NB_MODULE(_pymona, m) {
     m.def("implies", &makeImplies);
     m.def("iff", &makeIff);
     m.def("eq", &makeIff)
-            .def("eq", &makeElementEq,
+            .def("eq", &makeElementElementFormula<ASTForm_Equal1>,
                  nb::sig("def eq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef")
             )
             .def("eq", &makeSetEq);
@@ -608,6 +640,12 @@ NB_MODULE(_pymona, m) {
 
     m.def("m_set", &makeSet,
           nb::sig("def m_set(*args: ElementRef | int) -> SetRef"));
+    m.def("min", &makeMinSet);
+    m.def("min", &makeMinArgs,
+          nb::sig("def min(*args: ElementRef | int) -> ElementRef"));
+    m.def("max", &makeMaxSet);
+    m.def("max", &makeMaxArgs,
+          nb::sig("def max(*args: ElementRef | int) -> ElementRef"));
 
     m.def("solve", &solve);
 

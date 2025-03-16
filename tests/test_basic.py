@@ -124,3 +124,31 @@ def test_set() -> None:
     s_val = model["s"]
     assert isinstance(s_val, set)
     assert {1, 2, 3} == s_val
+
+
+def test_min_max() -> None:
+    x = pymona.ElementIdent("x")
+    y = pymona.ElementIdent("y")
+    z = pymona.ElementIdent("z")
+    a = pymona.ElementIdent("a")
+    s = pymona.SetIdent("s")
+    model = pymona.solve(pymona.m_and(
+        pymona.eq(x, pymona.min(1, a, 4)),
+        pymona.eq(y, pymona.max(1, a, 4)),
+        pymona.eq(a, pymona.max(6)),
+        s(x),
+        s(y),
+        pymona.eq(z, pymona.max(s)),
+    ))
+    assert model is not None
+    x_val = model["x"]
+    y_val = model["y"]
+    z_val = model["z"]
+
+    assert isinstance(x_val, int)
+    assert isinstance(y_val, int)
+    assert isinstance(z_val, int)
+
+    assert x_val == 1
+    assert y_val == 6
+    assert z_val == y_val
