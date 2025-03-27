@@ -53,7 +53,16 @@ Identifiers set_union(const Identifiers &i1, const Identifiers &i2) {
 }
 
 struct IdentContainer {
+    std::string name;
     Ident ident;
+
+    IdentContainer(std::string name, Ident ident) : name(std::move(name)), ident(ident) {
+    }
+
+    IdentContainer(std::string_view name_, MonaTypeTag tag) : IdentContainer(
+        std::string(name_), addVar(name_, tag)
+    ) {
+    }
 };
 
 struct BoolRef {
@@ -62,15 +71,15 @@ struct BoolRef {
 };
 
 struct BoolIdent : BoolRef, IdentContainer {
-    BoolIdent(std::string_view name)
-        : BoolIdent(addVar(name, Varname0)) {
+    explicit BoolIdent(IdentContainer ident)
+        : BoolRef{
+              Identifiers{ident.ident},
+              std::make_shared<ASTForm_Var0>(ident.ident)
+          }, IdentContainer(std::move(ident)) {
     }
 
-    BoolIdent(Ident identt)
-        : BoolRef{
-              Identifiers{identt},
-              std::make_shared<ASTForm_Var0>(identt)
-          }, IdentContainer{identt} {
+    explicit BoolIdent(std::string_view name)
+        : BoolIdent(IdentContainer(name, Varname0)) {
     }
 };
 
@@ -96,15 +105,15 @@ struct ElementInt : ElementRef {
 };
 
 struct ElementIdent : ElementRef, IdentContainer {
-    ElementIdent(std::string_view name)
-        : ElementIdent(addVar(name, Varname1)) {
+    explicit ElementIdent(IdentContainer ident)
+        : ElementRef{
+              Identifiers{ident.ident},
+              std::make_shared<ASTTerm1_Var1>(ident.ident)
+          }, IdentContainer(std::move(ident)) {
     }
 
-    ElementIdent(Ident identt)
-        : ElementRef(
-              Identifiers{identt},
-              std::make_shared<ASTTerm1_Var1>(identt)
-          ), IdentContainer{identt} {
+    explicit ElementIdent(std::string_view name)
+        : ElementIdent(IdentContainer(name, Varname1)) {
     }
 };
 
@@ -114,15 +123,15 @@ struct SetRef {
 };
 
 struct SetIdent : SetRef, IdentContainer {
-    SetIdent(std::string_view name)
-        : SetIdent(addVar(name, Varname2)) {
+    explicit SetIdent(IdentContainer ident)
+        : SetRef{
+            Identifiers{ident.ident},
+            std::make_shared<ASTTerm2_Var2>(ident.ident)
+        }, IdentContainer(std::move(ident)) {
     }
 
-    SetIdent(Ident identt)
-        : SetRef{
-              Identifiers{identt},
-              std::make_shared<ASTTerm2_Var2>(identt)
-          }, IdentContainer{identt} {
+    explicit SetIdent(std::string_view name)
+        : SetIdent(IdentContainer(name, Varname2)) {
     }
 };
 
@@ -399,7 +408,7 @@ PredRef makePred(
         pred
     );
 
-    return PredRef{pred, n};
+    return PredRef{IdentContainer(std::string(name), pred), n};
 }
 
 BoolRef makePredCall(const PredRef &pred, nb::args args) {
@@ -535,9 +544,26 @@ ElementRef makeMaxSet(const SetRef &s) {
     };
 }
 
+bool modelGetBool(const Model &m, const BoolIdent &b) {
+    return m.bools.at(b.name);
+}
+
+int modelGetInt(const Model &m, const ElementIdent &i) {
+    return m.ints.at(i.name);
+}
+
+std::set<int> modelGetSet(const Model &m, const SetIdent &s) {
+    return m.sets.at(s.name);
+}
+
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
+
+    nb::class_<Model>(m, "Model")
+            .def("__getitem__", &modelGetBool)
+            .def("__getitem__", &modelGetInt)
+            .def("__getitem__", &modelGetSet);
 
     nb::class_<BoolRef>(m, "BoolRef")
             .def("dump", [](const BoolRef &f) { f.form->dump(); });

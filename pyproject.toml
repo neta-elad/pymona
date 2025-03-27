@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pymona"
-version = "0.0.15"
+version = "0.0.16"
 description = "Python bindings for the MONA WS1S/WS2S solver"
 readme = "README.md"
 requires-python = ">=3.12"

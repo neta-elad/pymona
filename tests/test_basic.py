@@ -7,8 +7,8 @@ def test_basic() -> None:
     formula = pymona.m_and(b1, pymona.m_not(b2))
     model = pymona.solve(formula)
     assert model is not None
-    assert model["b1"]
-    assert not model["b2"]
+    assert model[b1]
+    assert not model[b2]
 
 
 def test_ints() -> None:
@@ -23,17 +23,9 @@ def test_ints() -> None:
     )
     model = pymona.solve(formula)
     assert model is not None
-    x_val = model["x"]
-    y_val = model["y"]
-    z_val = model["z"]
-
-    assert isinstance(x_val, int)
-    assert isinstance(y_val, int)
-    assert isinstance(z_val, int)
-
-    assert x_val < y_val < z_val
-    assert x_val > 4
-    assert z_val < 10
+    assert model[x] < model[y] < model[z]
+    assert model[x] > 4
+    assert model[z] < 10
 
 
 def test_predicate() -> None:
@@ -62,19 +54,9 @@ def test_predicate() -> None:
 
     assert model is not None
 
-    c_val = model["c"]
-    x_val = model["x"]
-    y_val = model["y"]
-    s_val = model["s"]
-
-    assert isinstance(c_val, int)
-    assert isinstance(x_val, int)
-    assert isinstance(y_val, int)
-    assert isinstance(s_val, set)
-
-    assert y_val < x_val < c_val
-    assert x_val in s_val
-    assert y_val in s_val
+    assert model[y] < model[x] < model[c]
+    assert model[x] in model[s]
+    assert model[y] in model[s]
 
 
 def test_sub() -> None:
@@ -88,14 +70,8 @@ def test_sub() -> None:
     )
 
     assert model is not None
-    s1_val = model["s1"]
-    s2_val = model["s2"]
-
-    assert isinstance(s1_val, set)
-    assert isinstance(s2_val, set)
-
-    assert 0 in s1_val
-    assert s2_val <= s1_val
+    assert 0 in model[s1]
+    assert model[s2] <= model[s1]
 
 
 def test_addition() -> None:
@@ -103,27 +79,21 @@ def test_addition() -> None:
     y = pymona.ElementIdent("y")
     model = pymona.solve(pymona.m_and(5 + x > y - 3, y > 13, x < y))
     assert model is not None
-    x_val = model["x"]
-    assert isinstance(x_val, int)
-    assert x_val > 5
+    assert model[x] > 5
 
 
 def test_eq() -> None:
     x = pymona.ElementIdent("x")
     model = pymona.solve(pymona.eq(x, 5))
     assert model is not None
-    x_val = model["x"]
-    assert isinstance(x_val, int)
-    assert x_val == 5
+    assert model[x] == 5
 
 
 def test_set() -> None:
     s = pymona.SetIdent("s")
     model = pymona.solve(pymona.eq(s, pymona.m_set(1, 2, 3)))
     assert model is not None
-    s_val = model["s"]
-    assert isinstance(s_val, set)
-    assert {1, 2, 3} == s_val
+    assert {1, 2, 3} == model[s]
 
 
 def test_min_max() -> None:
@@ -143,17 +113,9 @@ def test_min_max() -> None:
         )
     )
     assert model is not None
-    x_val = model["x"]
-    y_val = model["y"]
-    z_val = model["z"]
-
-    assert isinstance(x_val, int)
-    assert isinstance(y_val, int)
-    assert isinstance(z_val, int)
-
-    assert x_val == 1
-    assert y_val == 6
-    assert z_val == y_val
+    assert model[x] == 1
+    assert model[y] == 6
+    assert model[z] == model[y]
 
 
 def test_int() -> None:
