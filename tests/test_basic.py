@@ -44,10 +44,7 @@ def test_predicate() -> None:
     y = pymona.ElementIdent("y")
     s = pymona.SetIdent("s")
 
-    a_between_b_and_c = pymona.m_and(
-        b < a,
-        a < c
-    )
+    a_between_b_and_c = pymona.m_and(b < a, a < c)
 
     pred = pymona.pred("a_between_b_and_c", (a, b), a_between_b_and_c)
 
@@ -57,7 +54,8 @@ def test_predicate() -> None:
         pymona.lt(5, c),
         pymona.lt(20, a),
         a < b,
-        pymona.m_in(x, s), s(y),
+        pymona.m_in(x, s),
+        s(y),
     )
 
     model = pymona.solve(formula)
@@ -82,10 +80,12 @@ def test_predicate() -> None:
 def test_sub() -> None:
     s1 = pymona.SetIdent("s1")
     s2 = pymona.SetIdent("s2")
-    model = pymona.solve(pymona.m_and(
-        pymona.m_in(0, s1),
-        s2 <= s1,
-    ))
+    model = pymona.solve(
+        pymona.m_and(
+            pymona.m_in(0, s1),
+            s2 <= s1,
+        )
+    )
 
     assert model is not None
     s1_val = model["s1"]
@@ -132,14 +132,16 @@ def test_min_max() -> None:
     z = pymona.ElementIdent("z")
     a = pymona.ElementIdent("a")
     s = pymona.SetIdent("s")
-    model = pymona.solve(pymona.m_and(
-        pymona.eq(x, pymona.min(1, a, 4)),
-        pymona.eq(y, pymona.max(1, a, 4)),
-        pymona.eq(a, pymona.max(6)),
-        s(x),
-        s(y),
-        pymona.eq(z, pymona.max(s)),
-    ))
+    model = pymona.solve(
+        pymona.m_and(
+            pymona.eq(x, pymona.min(1, a, 4)),
+            pymona.eq(y, pymona.max(1, a, 4)),
+            pymona.eq(a, pymona.max(6)),
+            s(x),
+            s(y),
+            pymona.eq(z, pymona.max(s)),
+        )
+    )
     assert model is not None
     x_val = model["x"]
     y_val = model["y"]
@@ -152,3 +154,7 @@ def test_min_max() -> None:
     assert x_val == 1
     assert y_val == 6
     assert z_val == y_val
+
+
+def test_int() -> None:
+    assert pymona.solve(pymona.eq(pymona.m_int(5), pymona.ElementInt(5))) is not None

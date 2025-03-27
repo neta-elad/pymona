@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pymona"
-version = "0.0.14"
+version = "0.0.15"
 description = "Python bindings for the MONA WS1S/WS2S solver"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -19,7 +19,6 @@ Homepage = "https://github.com/neta-elad/pymona"
 dev = [
     "autoflake==2.3.1",
     "black==24.10.0",
-    "isort==5.13.2",
     "mypy==1.14.1",
     "pytest==8.3.4",
 ]

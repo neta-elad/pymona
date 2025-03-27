@@ -126,7 +126,7 @@ struct SetIdent : SetRef, IdentContainer {
     }
 };
 
-ElementRef makeInt(int i) {
+ElementInt makeInt(int i) {
     return i;
 }
 
@@ -563,7 +563,7 @@ NB_MODULE(_pymona, m) {
             .def("__ge__", &makeGeq,
                  nb::sig("def __ge__(self, arg: ElementRef | int) -> BoolRef"));
 
-    nb::class_<ElementInt>(m, "ElementInt")
+    nb::class_<ElementInt, ElementRef>(m, "ElementInt")
             .def(nb::init_implicit<int>())
             .def("__add__", &makePlusLeftInt);
     nb::class_<ElementIdent, ElementRef>(m, "ElementIdent")
