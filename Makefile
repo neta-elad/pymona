@@ -14,7 +14,7 @@ format: $(VENV_DIR).installed-dev
 
 install: $(VENV_DIR).installed-dev
 
-$(VENV_DIR).installed-dev: pyproject.toml src $(VENV_DIR)
+$(VENV_DIR).installed-dev: pyproject.toml src vendor $(VENV_DIR)
 	$(VENV_BIN)pip install ".[dev]"
 	touch $(VENV_DIR).installed-dev
 
