@@ -9,6 +9,7 @@ def test_basic() -> None:
     assert model is not None
     assert model[b1]
     assert not model[b2]
+    assert model.bools == {"b1": True, "b2": False}
 
 
 def test_ints() -> None:
@@ -26,6 +27,7 @@ def test_ints() -> None:
     assert model[x] < model[y] < model[z]
     assert model[x] > 4
     assert model[z] < 10
+    assert model.ints == {"x": model[x], "y": model[y], "z": model[z]}
 
 
 def test_predicate() -> None:
@@ -57,6 +59,7 @@ def test_predicate() -> None:
     assert model[y] < model[x] < model[c]
     assert model[x] in model[s]
     assert model[y] in model[s]
+    assert model.sets == {"s": model[s]}
 
 
 def test_sub() -> None:

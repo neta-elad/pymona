@@ -563,7 +563,10 @@ NB_MODULE(_pymona, m) {
     nb::class_<Model>(m, "Model")
             .def("__getitem__", &modelGetBool)
             .def("__getitem__", &modelGetInt)
-            .def("__getitem__", &modelGetSet);
+            .def("__getitem__", &modelGetSet)
+            .def_ro("bools", &Model::bools)
+            .def_ro("ints", &Model::ints)
+            .def_ro("sets", &Model::sets);
 
     nb::class_<BoolRef>(m, "BoolRef")
             .def("dump", [](const BoolRef &f) { f.form->dump(); });
