@@ -237,6 +237,17 @@ BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
     };
 }
 
+BoolRef makeNot(const BoolRef &f) {
+    return BoolRef{
+        f.identifiers,
+        std::make_shared<ASTForm_Not>(f.form, dummyPos)
+    };
+}
+
+BoolRef makeNiff(const BoolRef &f1, const BoolRef &f2) {
+    return makeNot(makeIff(f1, f2));
+}
+
 BoolRef makeSetEq(const SetRef &s1, const SetRef &s2) {
     return BoolRef{
         identUnion(s1.identifiers, s2.identifiers),
@@ -244,10 +255,10 @@ BoolRef makeSetEq(const SetRef &s1, const SetRef &s2) {
     };
 }
 
-BoolRef makeNot(const BoolRef &f) {
+BoolRef makeSetNeq(const SetRef &s1, const SetRef &s2) {
     return BoolRef{
-        f.identifiers,
-        std::make_shared<ASTForm_Not>(f.form, dummyPos)
+        identUnion(s1.identifiers, s2.identifiers),
+        std::make_shared<ASTForm_NotEqual2>(s1.term, s2.term)
     };
 }
 
@@ -670,6 +681,11 @@ NB_MODULE(_pymona, m) {
                  nb::sig("def eq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef")
             )
             .def("eq", &makeSetEq);
+    m.def("neq", &makeNiff)
+            .def("neq", &makeElementElementFormula<ASTForm_NotEqual1>,
+                 nb::sig("def neq(arg0: ElementRef | int, arg1: ElementRef | int) -> BoolRef")
+            )
+            .def("neq", &makeSetNeq);
     m.def("m_not", &makeNot);
 
     m.def("forall1", &makeForall1);

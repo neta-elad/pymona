@@ -138,7 +138,7 @@ def test_set_operations() -> None:
     formula = pymona.m_and(
         pymona.m_not(pymona.is_empty(p)),
         pymona.m_not(pymona.is_empty(q)),
-        pymona.m_not(pymona.eq(p, q)),
+        pymona.neq(p, q),
         pymona.eq(p | q, pymona.m_set(2, 3)),
     )
     assert (model := pymona.solve(formula)) is not None
