@@ -123,3 +123,23 @@ def test_min_max() -> None:
 
 def test_int() -> None:
     assert pymona.solve(pymona.eq(pymona.m_int(5), pymona.ElementInt(5))) is not None
+
+
+def test_set_operations() -> None:
+    p = pymona.SetIdent("p")
+    q = pymona.SetIdent("q")
+
+    assert (model := pymona.solve(pymona.eq(p - q, pymona.m_set(2, 3)))) is not None
+    assert model[p] - model[q] == {2, 3}
+
+    assert (model := pymona.solve(pymona.eq(p & q, pymona.m_set(2, 3)))) is not None
+    assert model[p] & model[q] == {2, 3}
+
+    formula = pymona.m_and(
+        pymona.m_not(pymona.is_empty(p)),
+        pymona.m_not(pymona.is_empty(q)),
+        pymona.m_not(pymona.eq(p, q)),
+        pymona.eq(p | q, pymona.m_set(2, 3)),
+    )
+    assert (model := pymona.solve(formula)) is not None
+    assert model[p] | model[q] == {2, 3}
