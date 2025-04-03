@@ -134,7 +134,7 @@ template<typename T>
 BoolRef makeElementElementFormula(const ElementRef &e1, const ElementRef &e2) {
     return BoolRef{
         identUnion(e1.identifiers, e2.identifiers),
-        std::make_shared<T>(e1.ast, e2.ast, dummyPos)
+        std::make_shared<T>(e1.ast, e2.ast)
     };
 }
 
@@ -160,7 +160,7 @@ BoolRef makeSup(const SetRef &s1, const SetRef &s2) {
 BoolRef makeIn(const ElementRef &e, const SetRef &s) {
     return BoolRef{
         identUnion(e.identifiers, s.identifiers),
-        std::make_shared<ASTForm_In>(e.ast, s.ast, dummyPos)
+        std::make_shared<ASTForm_In>(e.ast, s.ast)
     };
 }
 
@@ -171,14 +171,14 @@ BoolRef makeNi(const SetRef &s, const ElementRef &e) {
 BoolRef makeTrue() {
     return BoolRef{
         Identifiers{},
-        std::make_shared<ASTForm_True>(dummyPos)
+        std::make_shared<ASTForm_True>()
     };
 }
 
 BoolRef makeFalse() {
     return BoolRef{
         Identifiers{},
-        std::make_shared<ASTForm_False>(dummyPos)
+        std::make_shared<ASTForm_False>()
     };
 }
 
@@ -198,12 +198,12 @@ BoolRef makeIsEmpty(const SetRef &s) {
 
 BoolRef makeAnd(nb::args args) {
     Identifiers identifiers;
-    ASTFormPtr result = std::make_shared<ASTForm_True>(dummyPos);
+    ASTFormPtr result = std::make_shared<ASTForm_True>();
     for (auto arg: args) {
         BoolRef f = nb::cast<BoolRef>(arg);
         identifiers.insert(f.identifiers.begin(), f.identifiers.end());
         result = std::make_shared<ASTForm_And>(
-            std::move(result), f.ast, dummyPos
+            std::move(result), f.ast
         );
     }
     return BoolRef{identifiers, std::move(result)};
@@ -211,12 +211,12 @@ BoolRef makeAnd(nb::args args) {
 
 BoolRef makeOr(nb::args args) {
     Identifiers identifiers;
-    ASTFormPtr result = std::make_shared<ASTForm_False>(dummyPos);
+    ASTFormPtr result = std::make_shared<ASTForm_False>();
     for (auto arg: args) {
         BoolRef f = nb::cast<BoolRef>(arg);
         identifiers.insert(f.identifiers.begin(), f.identifiers.end());
         result = std::make_shared<ASTForm_Or>(
-            std::move(result), f.ast, dummyPos
+            std::move(result), f.ast
         );
     }
     return BoolRef{identifiers, std::move(result)};
@@ -225,7 +225,7 @@ BoolRef makeOr(nb::args args) {
 BoolRef makeImplies(const BoolRef &f1, const BoolRef &f2) {
     return BoolRef{
         identUnion(f1.identifiers, f2.identifiers),
-        std::make_shared<ASTForm_Impl>(f1.ast, f2.ast, dummyPos)
+        std::make_shared<ASTForm_Impl>(f1.ast, f2.ast)
     };
 }
 
@@ -239,7 +239,7 @@ BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
 BoolRef makeNot(const BoolRef &f) {
     return BoolRef{
         f.identifiers,
-        std::make_shared<ASTForm_Not>(f.ast, dummyPos)
+        std::make_shared<ASTForm_Not>(f.ast)
     };
 }
 
