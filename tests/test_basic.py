@@ -62,6 +62,24 @@ def test_predicate() -> None:
     assert model.sets == {"s": model[s]}
 
 
+def test_pred_decorator() -> None:
+    c = pymona.ElementIdent("c")
+    x = pymona.ElementIdent("x")
+    y = pymona.ElementIdent("y")
+
+    @pymona.to_pred
+    def a_between_b_and_c(a: pymona.ElementRef, b: pymona.ElementRef) -> pymona.BoolRef:
+        return pymona.m_and(b < a, a < c)
+
+    formula = pymona.m_and(3 < c, c < 7, a_between_b_and_c(x, y), 0 < y)
+
+    model = pymona.solve(formula)
+
+    assert model is not None
+
+    assert model[y] < model[x] < model[c]
+
+
 def test_sub() -> None:
     s1 = pymona.SetIdent("s1")
     s2 = pymona.SetIdent("s2")
