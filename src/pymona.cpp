@@ -383,10 +383,11 @@ struct PredRef : IdentContainer {
     int n;
 };
 
-PredRef makePred(
+PredRef doMakePred(
     std::string_view name,
     nb::typed<nb::iterable, std::variant<BoolIdent, ElementIdent, SetIdent> > ids,
-    const BoolRef &f
+    const BoolRef &f,
+    bool macro
 ) {
     IdentList *list = new IdentList;
     for (auto id: nb::iter(ids)) {
@@ -406,11 +407,25 @@ PredRef makePred(
         frees,
         bound,
         f.ast,
-        false,
+        true,
         pred
     );
 
     return PredRef{pred, n};
+}
+
+PredRef makePred(
+    std::string_view name,
+    nb::typed<nb::iterable, std::variant<BoolIdent, ElementIdent, SetIdent> > ids,
+    const BoolRef &f) {
+    return doMakePred(name, ids, f, false);
+}
+
+PredRef makeMacro(
+    std::string_view name,
+    nb::typed<nb::iterable, std::variant<BoolIdent, ElementIdent, SetIdent> > ids,
+    const BoolRef &f) {
+    return doMakePred(name, ids, f, true);
 }
 
 BoolRef makePredCall(const PredRef &pred, nb::args args) {
@@ -710,4 +725,5 @@ NB_MODULE(_pymona, m) {
     m.def("solve", &solve);
 
     m.def("pred", &makePred);
+    m.def("macro", &makeMacro);
 }
