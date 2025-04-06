@@ -431,11 +431,15 @@ PredRef makeMacro(
 BoolRef makePredCall(const PredRef &pred, nb::args args) {
     Identifiers identifiers;
     SharedASTList salist;
-    for (auto arg: args) {
+    for (auto i = 0; i < args.size(); ++i) {
+        auto arg = args[i];
         if (nb::isinstance<BoolRef>(arg)) {
             const auto &ref = nb::cast<const BoolRef &>(arg);
             identifiers.insert(ref.identifiers.begin(), ref.identifiers.end());
             salist.push_back(ref.ast);
+        } else if (nb::isinstance<int>(arg)) {
+            int n = nb::cast<int>(arg);
+            salist.push_back(std::make_shared<ASTTerm1_Int>(n));
         } else if (nb::isinstance<ElementRef>(arg)) {
             const auto &ref = nb::cast<const ElementRef &>(arg);
             identifiers.insert(ref.identifiers.begin(), ref.identifiers.end());
@@ -445,7 +449,11 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
             identifiers.insert(ref.identifiers.begin(), ref.identifiers.end());
             salist.push_back(ref.ast);
         } else {
-            throw nanobind::value_error("Bad argument passed to predicate");
+            throw nanobind::value_error(std::format(
+                "Bad argument passed to predicate at {}: {}",
+                i,
+                nb::repr(arg).c_str()
+            ).c_str());
         }
     }
 
@@ -656,7 +664,8 @@ NB_MODULE(_pymona, m) {
             .def(nb::init_implicit<SetIdent>());
 
     nb::class_<PredRef>(m, "PredRef")
-            .def("__call__", &makePredCall)
+            .def("__call__", &makePredCall,
+                 nb::sig("def __call__(self, *args: BoolRef | ElementRef | int | SetRef) -> BoolRef"))
             .def("__str__", &lookupSymbol<PredRef>)
             .def("__repr__", [](const PredRef &p) {
                 return std::format(
