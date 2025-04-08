@@ -602,6 +602,13 @@ std::set<int> modelGetSet(const Model &m, const SetIdent &s) {
     return m.sets.find(lookupSymbol(s))->second;
 }
 
+void reset() {
+    clear();
+    symbolTable.clear();
+    predicateLib.clear();
+    offsets.clear();
+    numTypes = 0;
+}
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
@@ -735,4 +742,6 @@ NB_MODULE(_pymona, m) {
 
     m.def("pred", &makePred);
     m.def("macro", &makeMacro);
+
+    m.def("reset", &reset);
 }

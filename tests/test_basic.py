@@ -1,4 +1,12 @@
 import pymona
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def run_around_tests():
+    yield
+
+    pymona.reset()
 
 
 def test_basic() -> None:
