@@ -688,7 +688,7 @@ NB_MODULE(_pymona, m) {
             .def(nb::init_implicit<ElementIdent>())
             .def(nb::init_implicit<SetIdent>());
 
-    nb::class_<PredRef>(m, "PredRef")
+    nb::class_<PredRef>(m, "PredRef", nb::is_weak_referenceable())
             .def("__call__", &makePredCall,
                  nb::sig("def __call__(self, *args: BoolRef | ElementRef | int | SetRef) -> BoolRef"))
             .def("__str__", &lookupPredSymbol)

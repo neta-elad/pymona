@@ -1,3 +1,5 @@
+from weakref import WeakValueDictionary
+
 import pymona
 
 
@@ -80,6 +82,14 @@ def test_pred_decorator() -> None:
     assert model is not None
 
     assert model[y] < model[x] < model[c]
+
+
+def test_weak_pred_cache() -> None:
+    x = pymona.ElementIdent("x")
+    y = pymona.ElementIdent("y")
+    cache: WeakValueDictionary[str, pymona.PredRef] = WeakValueDictionary()
+    cache["pred"] = pymona.pred("pred", (x, y), x < y)
+    assert len(cache) == 0
 
 
 def test_sub() -> None:
