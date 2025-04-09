@@ -23,7 +23,6 @@ class LazyPred[**P]:
     pred_ref: PredRef | None = None
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> BoolRef:
-        return self.fun(*args, **kwargs)  # type: ignore
         if self.pred_ref is None:
             self.pred_ref = self.build()
 

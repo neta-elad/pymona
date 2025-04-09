@@ -11,6 +11,7 @@
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/set.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/shared_ptr.h>
 
 #include "symboltable.h"
 #include "printline.h"
@@ -379,9 +380,24 @@ std::string_view lookupSymbol(const T &container) {
     return symbolTable.lookupSymbol(container.ident);
 }
 
-struct PredRef : IdentContainer {
+struct RawPredRef : IdentContainer {
     int n;
+
+    explicit RawPredRef(Ident ident, int n)
+    : IdentContainer(ident), n(n) {
+    }
+
+    ~RawPredRef() {
+        predicateLib.remove(ident);
+    }
 };
+
+using PredRef = std::shared_ptr<RawPredRef>;
+NB_MAKE_OPAQUE(PredRef);
+
+std::string_view lookupPredSymbol(const PredRef &pred) {
+    return lookupSymbol<RawPredRef>(*pred);
+}
 
 PredRef doMakePred(
     std::string_view name,
@@ -407,11 +423,11 @@ PredRef doMakePred(
         frees,
         bound,
         f.ast,
-        true,
+        macro,
         pred
     );
 
-    return PredRef{pred, n};
+    return std::make_shared<RawPredRef>(pred, n);
 }
 
 PredRef makePred(
@@ -457,7 +473,7 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
         }
     }
 
-    Ident id = pred.ident;
+    Ident id = pred->ident;
     int badArg;
 
     auto alist = salist.toAstList();
@@ -476,7 +492,7 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
             throw nb::value_error(std::format(
                 "Wrong number of parameters to {}, expected {}, got {}",
                 symbolTable.lookupSymbol(id),
-                pred.n,
+                pred->n,
                 salist.size()
             ).c_str());
         case tOK:
@@ -610,6 +626,8 @@ void reset() {
     numTypes = 0;
 }
 
+// todo: stats function for the current global state
+
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
 
@@ -673,12 +691,12 @@ NB_MODULE(_pymona, m) {
     nb::class_<PredRef>(m, "PredRef")
             .def("__call__", &makePredCall,
                  nb::sig("def __call__(self, *args: BoolRef | ElementRef | int | SetRef) -> BoolRef"))
-            .def("__str__", &lookupSymbol<PredRef>)
+            .def("__str__", &lookupPredSymbol)
             .def("__repr__", [](const PredRef &p) {
                 return std::format(
                     "<pymona.PredRef `{}` with {} parameters>",
-                    lookupSymbol(p),
-                    p.n
+                    lookupPredSymbol(p),
+                    p->n
                 );
             });
 

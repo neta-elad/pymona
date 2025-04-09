@@ -1,12 +1,4 @@
 import pymona
-import pytest
-
-
-@pytest.fixture(autouse=True)
-def run_around_tests():
-    yield
-
-    pymona.reset()
 
 
 def test_basic() -> None:
@@ -76,10 +68,12 @@ def test_pred_decorator() -> None:
     y = pymona.ElementIdent("y")
 
     @pymona.to_pred
-    def a_between_b_and_c(a: pymona.ElementRef, b: pymona.ElementRef) -> pymona.BoolRef:
+    def a_between_b_and_c2(
+        a: pymona.ElementRef, b: pymona.ElementRef
+    ) -> pymona.BoolRef:
         return pymona.m_and(b < a, a < c)
 
-    formula = pymona.m_and(3 < c, c < 7, a_between_b_and_c(x, y), 0 < y)
+    formula = pymona.m_and(3 < c, c < 7, a_between_b_and_c2(x, y), 0 < y)
 
     model = pymona.solve(formula)
 
