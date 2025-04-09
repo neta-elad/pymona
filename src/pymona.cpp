@@ -392,7 +392,7 @@ struct RawPredRef : IdentContainer {
     }
 };
 
-using PredRef = std::shared_ptr<RawPredRef>;
+using PredRef = std::shared_ptr<RawPredRef>;  // todo: formulas and terms should keep a list of PredRefs used (so it won't be garbage collected)
 NB_MAKE_OPAQUE(PredRef);
 
 std::string_view lookupPredSymbol(const PredRef &pred) {
