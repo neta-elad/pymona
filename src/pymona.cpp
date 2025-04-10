@@ -57,11 +57,16 @@ struct IdentContainer {
     Ident ident;
 };
 
+struct RawPredRef;
+using PredRef = std::shared_ptr<RawPredRef>;
+using Preds = std::set<PredRef>;
+
 struct RawPredRef : IdentContainer {
     int n;
+    Preds preds;
 
-    explicit RawPredRef(Ident ident, int n)
-    : IdentContainer(ident), n(n) {
+    explicit RawPredRef(Ident ident, int n, Preds preds)
+    : IdentContainer(ident), n(n), preds(std::move(preds)) {
     }
 
     ~RawPredRef() {
@@ -69,10 +74,9 @@ struct RawPredRef : IdentContainer {
     }
 };
 
-using PredRef = std::shared_ptr<RawPredRef>;  // todo: formulas and terms should keep a list of PredRefs used (so it won't be garbage collected)
+
 NB_MAKE_OPAQUE(PredRef);
 
-using Preds = std::set<PredRef>;
 
 Preds predUnion(const Preds &i1, const Preds &i2) {
     Preds result(i1);
@@ -464,21 +468,21 @@ PredRef doMakePred(
         pred
     );
 
-    return std::make_shared<RawPredRef>(pred, n);
+    return std::make_shared<RawPredRef>(pred, n, f.preds);
 }
 
 PredRef makePred(
     std::string_view name,
     nb::typed<nb::iterable, std::variant<BoolIdent, ElementIdent, SetIdent> > ids,
     const BoolRef &f) {
-    return doMakePred(name, ids, f, false);
+    return doMakePred(name, std::move(ids), f, false);
 }
 
 PredRef makeMacro(
     std::string_view name,
     nb::typed<nb::iterable, std::variant<BoolIdent, ElementIdent, SetIdent> > ids,
     const BoolRef &f) {
-    return doMakePred(name, ids, f, true);
+    return doMakePred(name, std::move(ids), f, true);
 }
 
 BoolRef makePredCall(const PredRef &pred, nb::args args) {
