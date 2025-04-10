@@ -57,6 +57,29 @@ struct IdentContainer {
     Ident ident;
 };
 
+struct RawPredRef : IdentContainer {
+    int n;
+
+    explicit RawPredRef(Ident ident, int n)
+    : IdentContainer(ident), n(n) {
+    }
+
+    ~RawPredRef() {
+        predicateLib.remove(ident);
+    }
+};
+
+using PredRef = std::shared_ptr<RawPredRef>;  // todo: formulas and terms should keep a list of PredRefs used (so it won't be garbage collected)
+NB_MAKE_OPAQUE(PredRef);
+
+using Preds = std::set<PredRef>;
+
+Preds predUnion(const Preds &i1, const Preds &i2) {
+    Preds result(i1);
+    result.insert(i2.begin(), i2.end());
+    return std::move(result);
+}
+
 template<typename T>
     requires std::derived_from<T, AST>
 struct AstRef {
@@ -65,13 +88,19 @@ struct AstRef {
 };
 
 struct BoolRef : AstRef<ASTForm> {
+    Preds preds;
+
+    BoolRef(Identifiers identifiers, Preds preds, ASTFormPtr ast)
+        : AstRef(std::move(identifiers), std::move(ast)), preds(std::move(preds)) {
+    }
 };
 
 struct BoolIdent : BoolRef, IdentContainer {
     explicit BoolIdent(Ident ident)
         : BoolRef{
               Identifiers{ident},
-              std::make_shared<ASTForm_Var0>(ident)
+            Preds{},
+              std::make_shared<ASTForm_Var0>(ident),
           }, IdentContainer{ident} {
     }
 
@@ -135,6 +164,7 @@ template<typename T>
 BoolRef makeElementElementFormula(const ElementRef &e1, const ElementRef &e2) {
     return BoolRef{
         identUnion(e1.identifiers, e2.identifiers),
+        Preds{},
         std::make_shared<T>(e1.ast, e2.ast)
     };
 }
@@ -150,6 +180,7 @@ BoolRef makeGeq(const ElementRef &i1, const ElementRef &i2) {
 BoolRef makeSub(const SetRef &s1, const SetRef &s2) {
     return BoolRef{
         identUnion(s1.identifiers, s2.identifiers),
+        Preds{},
         std::make_shared<ASTForm_Sub>(s1.ast, s2.ast)
     };
 }
@@ -161,6 +192,7 @@ BoolRef makeSup(const SetRef &s1, const SetRef &s2) {
 BoolRef makeIn(const ElementRef &e, const SetRef &s) {
     return BoolRef{
         identUnion(e.identifiers, s.identifiers),
+        Preds{},
         std::make_shared<ASTForm_In>(e.ast, s.ast)
     };
 }
@@ -172,6 +204,7 @@ BoolRef makeNi(const SetRef &s, const ElementRef &e) {
 BoolRef makeTrue() {
     return BoolRef{
         Identifiers{},
+        Preds{},
         std::make_shared<ASTForm_True>()
     };
 }
@@ -179,6 +212,7 @@ BoolRef makeTrue() {
 BoolRef makeFalse() {
     return BoolRef{
         Identifiers{},
+        Preds{},
         std::make_shared<ASTForm_False>()
     };
 }
@@ -193,39 +227,45 @@ SetRef makeEmpty() {
 BoolRef makeIsEmpty(const SetRef &s) {
     return BoolRef{
         s.identifiers,
+        Preds{},
         std::make_shared<ASTForm_EmptyPred>(s.ast)
     };
 }
 
 BoolRef makeAnd(nb::args args) {
     Identifiers identifiers;
+    Preds preds;
     ASTFormPtr result = std::make_shared<ASTForm_True>();
     for (auto arg: args) {
         BoolRef f = nb::cast<BoolRef>(arg);
         identifiers.insert(f.identifiers.begin(), f.identifiers.end());
+        preds.insert(f.preds.begin(), f.preds.end());
         result = std::make_shared<ASTForm_And>(
             std::move(result), f.ast
         );
     }
-    return BoolRef{identifiers, std::move(result)};
+    return BoolRef{identifiers, preds,std::move(result)};
 }
 
 BoolRef makeOr(nb::args args) {
     Identifiers identifiers;
+    Preds preds;
     ASTFormPtr result = std::make_shared<ASTForm_False>();
     for (auto arg: args) {
         BoolRef f = nb::cast<BoolRef>(arg);
         identifiers.insert(f.identifiers.begin(), f.identifiers.end());
+        preds.insert(f.preds.begin(), f.preds.end());
         result = std::make_shared<ASTForm_Or>(
             std::move(result), f.ast
         );
     }
-    return BoolRef{identifiers, std::move(result)};
+    return BoolRef{identifiers, preds, std::move(result)};
 }
 
 BoolRef makeImplies(const BoolRef &f1, const BoolRef &f2) {
     return BoolRef{
         identUnion(f1.identifiers, f2.identifiers),
+        predUnion(f1.preds, f2.preds),
         std::make_shared<ASTForm_Impl>(f1.ast, f2.ast)
     };
 }
@@ -233,6 +273,7 @@ BoolRef makeImplies(const BoolRef &f1, const BoolRef &f2) {
 BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
     return BoolRef{
         identUnion(f1.identifiers, f2.identifiers),
+        predUnion(f1.preds, f2.preds),
         std::make_shared<ASTForm_Biimpl>(f1.ast, f2.ast)
     };
 }
@@ -240,6 +281,7 @@ BoolRef makeIff(const BoolRef &f1, const BoolRef &f2) {
 BoolRef makeNot(const BoolRef &f) {
     return BoolRef{
         f.identifiers,
+        f.preds,
         std::make_shared<ASTForm_Not>(f.ast)
     };
 }
@@ -251,6 +293,7 @@ BoolRef makeNiff(const BoolRef &f1, const BoolRef &f2) {
 BoolRef makeSetEq(const SetRef &s1, const SetRef &s2) {
     return BoolRef{
         identUnion(s1.identifiers, s2.identifiers),
+        Preds{},
         std::make_shared<ASTForm_Equal2>(s1.ast, s2.ast)
     };
 }
@@ -258,6 +301,7 @@ BoolRef makeSetEq(const SetRef &s1, const SetRef &s2) {
 BoolRef makeSetNeq(const SetRef &s1, const SetRef &s2) {
     return BoolRef{
         identUnion(s1.identifiers, s2.identifiers),
+        Preds{},
         std::make_shared<ASTForm_NotEqual2>(s1.ast, s2.ast)
     };
 }
@@ -266,6 +310,7 @@ BoolRef makeForall1(const ElementIdent &id, const BoolRef &f) {
     IdentList *list = new IdentList(id.ident);
     return BoolRef{
         identUnion(id.identifiers, f.identifiers),
+        f.preds,
         std::make_shared<ASTForm_All1>(nullptr, list, f.ast)
     };
 }
@@ -284,6 +329,7 @@ BoolRef makeForall1Iter(
     identifiers.insert(f.identifiers.begin(), f.identifiers.end());
     return BoolRef{
         identifiers,
+        f.preds,
         std::make_shared<ASTForm_All1>(nullptr, list, f.ast)
     };
 }
@@ -292,6 +338,7 @@ BoolRef makeExists1(const ElementIdent &id, const BoolRef &f) {
     IdentList *list = new IdentList(id.ident);
     return BoolRef{
         identUnion(id.identifiers, f.identifiers),
+        f.preds,
         std::make_shared<ASTForm_Ex1>(nullptr, list, f.ast)
     };
 }
@@ -310,6 +357,7 @@ BoolRef makeExists1Iter(
     identifiers.insert(f.identifiers.begin(), f.identifiers.end());
     return BoolRef{
         identifiers,
+        f.preds,
         std::make_shared<ASTForm_Ex1>(nullptr, list, f.ast)
     };
 }
@@ -318,6 +366,7 @@ BoolRef makeForall2(const SetIdent &id, const BoolRef &f) {
     IdentList *list = new IdentList(id.ident);
     return BoolRef{
         identUnion(id.identifiers, f.identifiers),
+        f.preds,
         std::make_shared<ASTForm_All2>(nullptr, list, f.ast)
     };
 }
@@ -336,6 +385,7 @@ BoolRef makeForall2Iter(
     identifiers.insert(f.identifiers.begin(), f.identifiers.end());
     return BoolRef{
         identifiers,
+        f.preds,
         std::make_shared<ASTForm_All2>(nullptr, list, f.ast)
     };
 }
@@ -344,6 +394,7 @@ BoolRef makeExists2(const SetIdent &id, const BoolRef &f) {
     IdentList *list = new IdentList(id.ident);
     return BoolRef{
         identUnion(id.identifiers, f.identifiers),
+        f.preds,
         std::make_shared<ASTForm_Ex2>(nullptr, list, f.ast)
     };
 }
@@ -362,6 +413,7 @@ BoolRef makeExists2Iter(
     identifiers.insert(f.identifiers.begin(), f.identifiers.end());
     return BoolRef{
         identifiers,
+        f.preds,
         std::make_shared<ASTForm_Ex2>(nullptr, list, f.ast)
     };
 }
@@ -379,21 +431,6 @@ template<typename T>
 std::string_view lookupSymbol(const T &container) {
     return symbolTable.lookupSymbol(container.ident);
 }
-
-struct RawPredRef : IdentContainer {
-    int n;
-
-    explicit RawPredRef(Ident ident, int n)
-    : IdentContainer(ident), n(n) {
-    }
-
-    ~RawPredRef() {
-        predicateLib.remove(ident);
-    }
-};
-
-using PredRef = std::shared_ptr<RawPredRef>;  // todo: formulas and terms should keep a list of PredRefs used (so it won't be garbage collected)
-NB_MAKE_OPAQUE(PredRef);
 
 std::string_view lookupPredSymbol(const PredRef &pred) {
     return lookupSymbol<RawPredRef>(*pred);
@@ -502,6 +539,7 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
 
     return BoolRef{
         std::move(identifiers),
+        Preds{pred},
         std::make_shared<ASTForm_Call>(
             id, salist)
     };
