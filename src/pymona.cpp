@@ -668,6 +668,10 @@ void reset() {
     numTypes = 0;
 }
 
+void dump() {
+    symbolTable.dump();
+}
+
 // todo: stats function for the current global state
 
 NB_MODULE(_pymona, m) {
@@ -804,4 +808,5 @@ NB_MODULE(_pymona, m) {
     m.def("macro", &makeMacro);
 
     m.def("reset", &reset);
+    m.def("dump_symbol_table", &dump);
 }

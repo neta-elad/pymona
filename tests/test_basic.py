@@ -1,9 +1,10 @@
 from weakref import WeakValueDictionary
 
 import pymona
+import pytest
 
 
-def test_basic() -> None:
+def test_basic_formula() -> None:
     b1 = pymona.BoolIdent("b1")
     b2 = pymona.BoolIdent("b2")
     formula = pymona.m_and(b1, pymona.m_not(b2))
@@ -12,6 +13,14 @@ def test_basic() -> None:
     assert model[b1]
     assert not model[b2]
     assert model.bools == {"b1": True, "b2": False}
+
+
+@pytest.mark.skip
+def test_stress_test() -> None:
+    x = pymona.ElementIdent("x")
+
+    for _i in range(50_000):
+        assert pymona.solve(x > 5) is not None
 
 
 def test_ints() -> None:
