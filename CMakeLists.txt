@@ -8,8 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Werror)
 
-# Force debug
-set(CMAKE_BUILD_TYPE Debug)
+if (DEFINED ENV{FORCE_DEBUG})
+    message(WARNING "FORCING DEBUG")
+    set(CMAKE_BUILD_TYPE Debug)
+    add_compile_options(-g)
+    set(CMAKE_STRIP "")
+endif()
+
 
 add_subdirectory(vendor)
 
@@ -67,6 +72,13 @@ nanobind_add_module(
         src/pymona.cpp
 )
 target_link_libraries(_pymona PRIVATE mona)
+
+if (DEFINED ENV{FORCE_DEBUG})
+    set_target_properties(_pymona PROPERTIES
+            COMPILE_FLAGS "-g"
+            LINK_FLAGS "-g"
+    )
+endif()
 
 nanobind_add_stub(
         _pymona_stub
