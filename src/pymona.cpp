@@ -672,7 +672,13 @@ void dump() {
     symbolTable.dump();
 }
 
-// todo: stats function for the current global state
+void stats() {
+    utils_stats();
+    symbolTable.stats();
+    predicateLib.stats();
+    std::cout << std::format("max offset is {}\n", offsets.maxOffset());
+    std::cout << std::format("num types in {}\n", numTypes);
+}
 
 NB_MODULE(_pymona, m) {
     m.doc() = "Python bindings for the WS1S/WS2S solver MONA";
@@ -809,4 +815,5 @@ NB_MODULE(_pymona, m) {
 
     m.def("reset", &reset);
     m.def("dump_symbol_table", &dump);
+    m.def("stats", &stats);
 }
