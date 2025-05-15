@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Werror)
 
 if (DEFINED ENV{FORCE_DEBUG})
-    message(WARNING "FORCING DEBUG")
+    message(WARNING "Forcing DEBUG build with debug symbols")
     set(CMAKE_BUILD_TYPE Debug)
     add_compile_options(-g)
     set(CMAKE_STRIP "")

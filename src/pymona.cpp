@@ -66,7 +66,7 @@ struct RawPredRef : IdentContainer {
     Preds preds;
 
     explicit RawPredRef(Ident ident, int n, Preds preds)
-    : IdentContainer(ident), n(n), preds(std::move(preds)) {
+        : IdentContainer(ident), n(n), preds(std::move(preds)) {
     }
 
     ~RawPredRef() {
@@ -103,7 +103,7 @@ struct BoolIdent : BoolRef, IdentContainer {
     explicit BoolIdent(Ident ident)
         : BoolRef{
               Identifiers{ident},
-            Preds{},
+              Preds{},
               std::make_shared<ASTForm_Var0>(ident),
           }, IdentContainer{ident} {
     }
@@ -248,7 +248,7 @@ BoolRef makeAnd(nb::args args) {
             std::move(result), f.ast
         );
     }
-    return BoolRef{identifiers, preds,std::move(result)};
+    return BoolRef{identifiers, preds, std::move(result)};
 }
 
 BoolRef makeOr(nb::args args) {
@@ -717,7 +717,9 @@ NB_MODULE(_pymona, m) {
 
     nb::class_<ElementInt, ElementRef>(m, "ElementInt")
             .def(nb::init_implicit<int>())
-            .def("__add__", &makePlusLeftInt);
+            .def("__add__", &makePlusLeftInt,
+                 nb::sig("def __add__(self, arg: ElementRef | int) -> ElementRef"));
+
     nb::class_<ElementIdent, ElementRef>(m, "ElementIdent")
             .def(nb::init<std::string_view>())
             .def("__str__", &lookupSymbol<ElementIdent>);
