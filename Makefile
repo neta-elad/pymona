@@ -6,7 +6,7 @@ all: format type test
 
 .PHONY: test
 test: $(VENV_DIR).installed-dev
-	$(VENV_BIN)pytest tests
+	$(VENV_BIN)pytest tests -n auto
 
 .PHONY: type
 type: $(VENV_DIR).installed-dev

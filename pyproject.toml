@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pymona"
-version = "0.0.31"
+version = "0.0.32"
 description = "Python bindings for the MONA WS1S/WS2S solver"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,6 +21,7 @@ dev = [
     "black==24.10.0",
     "mypy==1.14.1",
     "pytest==8.3.4",
+    "pytest-xdist==3.6.1",
     "nanobind==2.7.0",
 ]
 
@@ -40,7 +41,7 @@ wheel.py-api = "cp312"
 build-verbosity = 1
 
 # Run pytest to ensure that the package was correctly built
-test-command = "pytest {project}/tests"
+test-command = "pytest {project}/tests -n auto"
 test-requires = "pytest"
 
 # Needed for full C++17 support
