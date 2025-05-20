@@ -84,18 +84,25 @@ class Model:
                     letters[name][letter] = value
 
         for name, end in ends.items():
+            valid_str = True
             buffer = io.StringIO()
             for i in range(end):
+                if not valid_str:
+                    break
                 found = False
                 for letter in alphabet:
                     if i in letters[name][letter]:
-                        assert (
-                            not found
-                        ), f"Invalid string for {name} (contradicting letters)"
+                        if found:  # contradicting letters
+                            valid_str = False
+                            break
                         buffer.write(letter)
                         found = True
-                assert found, f"Invalid string for {name} (missing letters)"
-            strings[name] = buffer.getvalue()
+                if not found:  # missing letters
+                    valid_str = False
+                    break
+
+            if valid_str:
+                strings[name] = buffer.getvalue()
 
         return cls(strings, dict(model.bools))
 
