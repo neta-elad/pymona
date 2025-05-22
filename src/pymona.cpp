@@ -1,8 +1,7 @@
 #include <string_view>
 #include <utility>
 #include <variant>
-#include <format>
-#include <concepts>
+#include <sstream>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -66,7 +65,7 @@ struct RawPredRef : IdentContainer {
     Preds preds;
 
     explicit RawPredRef(Ident ident, int n, Preds preds)
-        : IdentContainer(ident), n(n), preds(std::move(preds)) {
+        : IdentContainer{ident}, n(n), preds(std::move(preds)) {
     }
 
     ~RawPredRef() {
@@ -85,7 +84,6 @@ Preds predUnion(const Preds &i1, const Preds &i2) {
 }
 
 template<typename T>
-    requires std::derived_from<T, AST>
 struct AstRef {
     Identifiers identifiers;
     std::shared_ptr<T> ast;
@@ -95,7 +93,7 @@ struct BoolRef : AstRef<ASTForm> {
     Preds preds;
 
     BoolRef(Identifiers identifiers, Preds preds, ASTFormPtr ast)
-        : AstRef(std::move(identifiers), std::move(ast)), preds(std::move(preds)) {
+        : AstRef{std::move(identifiers), std::move(ast)}, preds(std::move(preds)) {
     }
 };
 
@@ -119,7 +117,7 @@ struct ElementRef : AstRef<ASTTerm1> {
     }
 
     ElementRef(Identifiers identifiers, ASTTerm1Ptr ast)
-        : AstRef(std::move(identifiers), std::move(ast)) {
+        : AstRef{std::move(identifiers), std::move(ast)} {
     }
 };
 
@@ -164,7 +162,6 @@ ElementInt makeInt(int i) {
 }
 
 template<typename T>
-    requires std::derived_from<T, ASTForm_tt>
 BoolRef makeElementElementFormula(const ElementRef &e1, const ElementRef &e2) {
     return BoolRef{
         identUnion(e1.identifiers, e2.identifiers),
@@ -431,7 +428,6 @@ std::optional<Model> solve(const BoolRef &formula) {
 }
 
 template<typename T>
-    requires std::derived_from<T, IdentContainer>
 std::string_view lookupSymbol(const T &container) {
     return symbolTable.lookupSymbol(container.ident);
 }
@@ -506,11 +502,9 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
             identifiers.insert(ref.identifiers.begin(), ref.identifiers.end());
             salist.push_back(ref.ast);
         } else {
-            throw nanobind::value_error(std::format(
-                "Bad argument passed to predicate at {}: {}",
-                i,
-                nb::repr(arg).c_str()
-            ).c_str());
+            std::ostringstream oss;
+            oss << "Bad argument passed to predicate at " << i << ": " << nb::repr(arg).c_str();
+            throw nb::value_error(oss.str().c_str());
         }
     }
 
@@ -519,23 +513,22 @@ BoolRef makePredCall(const PredRef &pred, nb::args args) {
 
     auto alist = salist.toAstList();
 
+    std::ostringstream oss;
+
     switch (predicateLib.testTypes(id, alist.get(), &badArg, true)) {
         case tWrongParameterType:
             alist->reset();
-            throw nb::value_error(std::format(
-                "Wrong type of parameter {} to {}",
-                badArg,
-                symbolTable.lookupSymbol(id)
-            ).c_str());
+            oss << "Wrong type of parameter " << badArg << " to " << symbolTable.lookupSymbol(id);
+            throw nb::value_error(oss.str().c_str());
 
         case tWrongNoParameters:
             alist->reset();
-            throw nb::value_error(std::format(
-                "Wrong number of parameters to {}, expected {}, got {}",
-                symbolTable.lookupSymbol(id),
-                pred->n,
-                salist.size()
-            ).c_str());
+            oss << "Wrong number of parameters to "
+                << symbolTable.lookupSymbol(id)
+                << ", expected " << pred->n
+                << ", got " << salist.size();
+
+            throw nb::value_error(oss.str().c_str());
         case tOK:
             ;
     }
@@ -676,8 +669,8 @@ void stats() {
     utils_stats();
     symbolTable.stats();
     predicateLib.stats();
-    std::cout << std::format("max offset is {}\n", offsets.maxOffset());
-    std::cout << std::format("num types in {}\n", numTypes);
+    std::cout << "max offset is " << offsets.maxOffset() << std::endl;
+    std::cout << "num types is " << numTypes << std::endl;
 }
 
 NB_MODULE(_pymona, m) {
@@ -747,11 +740,10 @@ NB_MODULE(_pymona, m) {
                  nb::sig("def __call__(self, *args: BoolRef | ElementRef | int | SetRef) -> BoolRef"))
             .def("__str__", &lookupPredSymbol)
             .def("__repr__", [](const PredRef &p) {
-                return std::format(
-                    "<pymona.PredRef `{}` with {} parameters>",
-                    lookupPredSymbol(p),
-                    p->n
-                );
+                std::ostringstream oss;
+                oss << "<pymona.PredRef `" << lookupPredSymbol(p)
+                    << "` with " << p->n << " parameters>";
+                return oss.str();
             });
 
     m.def("m_int", &makeInt);
