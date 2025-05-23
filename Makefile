@@ -19,6 +19,10 @@ format: $(VENV_DIR).installed-dev
 .PHONY: install
 install: $(VENV_DIR).installed-dev
 
+.PHONY: docker
+docker:
+	docker buildx build -t netaeladtau/pymona --platform linux/amd64,linux/arm64 .
+
 $(VENV_DIR).installed-dev: pyproject.toml src vendor $(VENV_DIR)
 	$(VENV_BIN)pip install ".[dev]"
 	touch $(VENV_DIR).installed-dev
